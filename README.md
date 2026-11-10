@@ -183,8 +183,8 @@ The project is being developed in the following phases.
 - [x] Start embedded Tomcat server.
 - [x] Implement health-check endpoint.
 - [x] Verify JSON API response.
-- [ ] Initialize local Git repository.
-- [ ] Publish initial code to GitHub.
+- [x] Initialize local Git repository.
+- [x] Publish initial code to GitHub.
 
 ### Phase 2 – Product Management
 - [ ] Design Product entity.
