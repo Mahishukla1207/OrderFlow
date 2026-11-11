@@ -97,6 +97,17 @@ OrderFlow is being developed using a layered architecture to separate request ha
 
 > **Note:** This represents the intended architecture. Components will be introduced as development progresses.
 
+### Current Implemented Structure
+
+The codebase currently implements the initial layered foundation inside `com.orderflow.orderflow`:
+
+- `HealthController.java` — REST controller exposing the `/api/v1/health` endpoint.
+- `service/ProductService.java` — Service layer handling product business logic and validation.
+- `repository/ProductRepository.java` — In-memory repository layer backed by a `HashMap` and `AtomicLong` ID generator.
+- `model/Product.java` — Domain model representing product attributes.
+
+> **Temporary In-Memory Storage:** `ProductRepository` currently uses an in-memory `HashMap` rather than a database. Product data is not persistent and is lost when the application restarts.
+
 ---
 
 ## Project Structure
@@ -111,23 +122,32 @@ orderflow/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── com/orderflow/orderflow/
-│   │   │       ├── OrderflowApplication.java
-│   │   │       └── HealthController.java
+│   │   │       ├── model/
+│   │   │       │   └── Product.java
+│   │   │       ├── repository/
+│   │   │       │   └── ProductRepository.java
+│   │   │       ├── service/
+│   │   │       │   └── ProductService.java
+│   │   │       ├── HealthController.java
+│   │   │       └── OrderflowApplication.java
 │   │   │
 │   │   └── resources/
 │   │       └── application.properties
 │   │
 │   └── test/
 │       └── java/
+│           └── com/orderflow/orderflow/
+│               └── OrderflowApplicationTests.java
 │
-├── .gitignore
 ├── .gitattributes
+├── .gitignore
 ├── mvnw
 ├── mvnw.cmd
-└── pom.xml
+├── pom.xml
+└── README.md
 ```
 
-As the project grows, the structure will expand into dedicated packages for controllers, services, repositories, entities, DTOs, configurations, exceptions, and security.
+As the project grows, the structure will expand into additional dedicated packages for controllers, DTOs, configurations, exceptions, and security.
 
 ---
 
@@ -139,9 +159,24 @@ As the project grows, the structure will expand into dedicated packages for cont
 - [x] Java 21 configuration.
 - [x] Embedded Tomcat server setup.
 - [x] Configurable application port.
-- [x] Initial REST controller.
-- [x] Application health-check endpoint.
+- [x] Initial REST controller (`HealthController.java`).
+- [x] Application health-check endpoint (`/api/v1/health`).
 - [x] JSON response generation.
+- [x] `Product` domain model (`model/Product.java`).
+- [x] In-memory `ProductRepository` backed by `HashMap` (`repository/ProductRepository.java`).
+- [x] `ProductService` business logic layer (`service/ProductService.java`).
+
+### ProductService Capabilities
+- Create products
+- Retrieve all products
+- Retrieve a product by ID
+- Update products
+- Delete products
+- Validate product names, prices, and stock quantities
+- Assign IDs through the repository
+- Default newly created products to active (`true`) when no value is provided
+
+> **Note:** The current repository uses an in-memory `HashMap`. Product data is not persistent and is lost when the application restarts.
 
 ---
 
@@ -187,13 +222,13 @@ The project is being developed in the following phases.
 - [x] Publish initial code to GitHub.
 
 ### Phase 2 – Product Management
-- [ ] Design Product entity.
-- [ ] Implement Product DTOs.
-- [ ] Build Product REST controller.
-- [ ] Implement service layer.
-- [ ] Implement repository layer.
-- [ ] Create product CRUD operations.
-- [ ] Add request validation.
+- [x] Design Product model (`Product.java`).
+- [x] Implement in-memory repository layer (`ProductRepository.java`).
+- [x] Implement service layer (`ProductService.java`).
+- [x] Implement service-layer product CRUD logic and validation.
+- [ ] Implement Product DTOs (request and response).
+- [ ] Build Product REST controller and CRUD API endpoints.
+- [ ] Add controller/DTO request validation.
 - [ ] Implement global exception handling.
 
 ### Phase 3 – Database Integration
@@ -364,16 +399,30 @@ The development process emphasizes:
 
 ## Project Progress
 
-**Current milestone:** Spring Boot foundation and initial REST API.
+**Current milestone:** Phase 2 – Product Management (domain model, in-memory repository, and service layer).
 
 | Metric | Current Progress |
 | :--- | :--- |
-| **Development phase** | Phase 1 – Foundation |
-| **Implemented API endpoints** | 1 |
-| **Core business modules** | 0 |
-| **Database integration** | Pending |
+| **Development phase** | Phase 2 – Product Management (In Progress) |
+| **Implemented API endpoints** | 1 (`/api/v1/health`) |
+| **Core business modules** | 1 (Product Management – Model, In-Memory Repository, Service) |
+| **Database integration** | Pending (currently using an in-memory `HashMap`) |
 | **Authentication** | Pending |
 | **Payment integration** | Pending |
+
+### Component Status
+- Product model (`Product.java`) — Implemented
+- In-memory product repository (`ProductRepository.java`) — Implemented
+- Product service layer (`ProductService.java`) — Implemented
+- Health check endpoint — Implemented
+
+### Upcoming Milestones
+- Product REST controller
+- REST API endpoints for CRUD operations
+- Request and response DTOs
+- Global exception handling
+- Unit testing
+- PostgreSQL and Spring Data JPA integration
 
 *Progress will be updated as features are implemented, tested, and documented.*
 
