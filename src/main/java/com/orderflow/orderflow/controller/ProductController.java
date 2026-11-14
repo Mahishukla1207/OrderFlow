@@ -1,5 +1,7 @@
 package com.orderflow.orderflow.controller;
 
+import com.orderflow.orderflow.dto.ProductRequest;
+import com.orderflow.orderflow.dto.ProductResponse;
 import com.orderflow.orderflow.model.Product;
 import com.orderflow.orderflow.service.ProductService;
 import java.util.List;
@@ -25,27 +27,34 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
+        Product product = toEntity(request);
         Product createdProduct = productService.createProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(createdProduct));
     }
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        List<Product> products = productService.getAllProducts();
-        return ResponseEntity.ok(products);
+    public ResponseEntity<List<ProductResponse>> getAllProducts() {
+        List<ProductResponse> responses = productService.getAllProducts()
+                .stream()
+                .map(this::toResponse)
+                .toList();
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
         return productService.getProductById(id)
+                .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody Product product) {
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody ProductRequest request) {
+        Product product = toEntity(request);
         return productService.updateProduct(id, product)
+                .map(this::toResponse)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -58,5 +67,30 @@ public class ProductController {
         }
         return ResponseEntity.notFound().build();
     }
-}
 
+    private Product toEntity(ProductRequest request) {
+        if (request == null) {
+            return null;
+        }
+        Product product = new Product();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setPrice(request.getPrice());
+        product.setStockQuantity(request.getStockQuantity());
+        return product;
+    }
+
+    private ProductResponse toResponse(Product product) {
+        if (product == null) {
+            return null;
+        }
+        return new ProductResponse(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getStockQuantity(),
+                product.getActive()
+        );
+    }
+}
