@@ -1,7 +1,7 @@
 # OrderFlow – E-commerce Order Management System
 
 <p align="center">
-  <strong>A production-oriented e-commerce backend built with Java and Spring Boot.</strong>
+  <strong>An e-commerce order management backend built with Java and Spring Boot.</strong>
 </p>
 
 <p align="center">
@@ -9,33 +9,15 @@
   <img src="https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?logo=springboot" alt="Spring Boot"/>
   <img src="https://img.shields.io/badge/Maven-Build%20Tool-C71A36?logo=apachemaven" alt="Maven"/>
   <img src="https://img.shields.io/badge/Status-In%20Development-blue" alt="In Development"/>
-  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT License"/>
 </p>
 
 ---
 
-## Overview
+## Project Overview
 
-OrderFlow is an e-commerce order management backend designed to handle the core operations of an online shopping platform, including product management, inventory control, shopping carts, order processing, payments, and order tracking.
+**OrderFlow** is an e-commerce order management backend system designed to handle the core operations of an online shopping platform, including product catalog management, inventory control, shopping carts, checkout workflows, payment processing, and order lifecycle tracking.
 
-The project focuses on building a reliable, secure, and maintainable backend system while exploring real-world software engineering challenges such as database transactions, concurrent inventory updates, payment consistency, idempotency, and API performance.
-
-Rather than being limited to basic CRUD operations, OrderFlow aims to demonstrate practical backend engineering principles and production-oriented system design.
-
-This project is being developed incrementally, with an emphasis on understanding the underlying concepts, writing maintainable code, and testing real-world scenarios.
-
----
-
-## Project Objectives
-
-- Build RESTful APIs using Java and Spring Boot.
-- Implement a clean, layered backend architecture.
-- Design and manage relational databases using PostgreSQL.
-- Implement authentication and role-based authorization.
-- Maintain inventory consistency during concurrent purchases.
-- Develop reliable order and payment workflows.
-- Explore caching, asynchronous processing, and performance optimization.
-- Write automated tests and containerize the application.
+The project is developed using **Java 21** and **Spring Boot**, focusing on building a maintainable, clean-architecture backend while incrementally exploring real-world software engineering concepts. Rather than implementing everything at once, OrderFlow is built step-by-step — establishing architectural boundaries, in-memory data structures, DTO contracts, and business validations first, before introducing database persistence, concurrency controls, security, and distributed tooling.
 
 ---
 
@@ -44,69 +26,190 @@ This project is being developed incrementally, with an emphasis on understanding
 | Technology | Purpose | Status |
 | :--- | :--- | :--- |
 | **Java 21** | Core programming language | In use |
-| **Spring Boot 4.1.2** | Backend framework | In use |
-| **Maven** | Dependency and build management | In use |
-| **Spring Web** | REST API development | In use |
-| **PostgreSQL** | Relational database | Planned |
-| **Spring Data JPA** | Database persistence | Planned |
-| **Hibernate** | ORM | Planned |
-| **Spring Security** | Application security | Planned |
-| **JWT** | Authentication | Planned |
-| **Redis** | Caching and rate limiting | Planned |
-| **JUnit 5 & Mockito** | Automated testing | Planned |
-| **Docker** | Containerization | Planned |
-| **Swagger / OpenAPI** | API documentation | Planned |
-| **Apache Kafka** | Event-driven processing | Future enhancement |
+| **Spring Boot 4.1.2** | Application framework | In use |
+| **Maven** | Dependency management and build automation | In use |
+| **Spring Web (MVC)** | REST API routing, request handling, and JSON serialization | In use |
+| **REST APIs** | HTTP-based client-server communication | In use |
+| **Git & GitHub** | Version control and repository hosting | In use |
+| **Jakarta Bean Validation** | Declarative request validation annotations | Planned |
+| **Global Exception Handling** | Centralized `@RestControllerAdvice` error translation | Planned |
+| **PostgreSQL** | Relational database persistence | Planned |
+| **Spring Data JPA & Hibernate** | ORM and repository persistence | Planned |
+| **JUnit 5 & Mockito** | Automated unit and integration testing | Planned |
+| **Spring Security & JWT** | Authentication, authorization, and RBAC | Planned |
+| **Redis** | In-memory caching and rate limiting | Planned |
+| **Docker** | Containerization and local environment setup | Planned |
+| **Apache Kafka** | Asynchronous event-driven processing | Future enhancement |
+
+---
+
+## Current Features
+
+- **Application Health Check**: Endpoint (`/api/v1/health`) returning server status and application name.
+- **Product Domain Model**: Encapsulated `Product` entity with `id`, `name`, `description`, `price`, `stockQuantity`, and `active` attributes.
+- **In-Memory Storage**: `ProductRepository` using a `HashMap` for storage with `AtomicLong` for atomic ID generation.
+- **Service Layer & Business Validation**:
+  - Validates that product names are not null or blank.
+  - Enforces positive product prices (`price > 0`) using `BigDecimal.compareTo`.
+  - Ensures non-negative stock counts (`stockQuantity >= 0`).
+  - Defaults newly created products to `active = true` when null.
+  - Enforces server-assigned IDs during creation and preserves IDs during updates.
+- **Data Transfer Objects (DTOs)**:
+  - `ProductRequest`: Input payload containing `name`, `description`, `price`, and `stockQuantity`. Prevents client tampering with `id` or `active`.
+  - `ProductResponse`: Read-only output representation exposing complete product details to clients.
+- **Manual DTO Mapping**: Explicit, decoupling conversions between DTOs and domain models directly in the controller layer.
+- **Complete Product REST API**: Full CRUD endpoints with standard HTTP status codes (`201 Created`, `200 OK`, `204 No Content`, `404 Not Found`).
 
 ---
 
 ## Architecture
 
-OrderFlow is being developed using a layered architecture to separate request handling, business logic, data access, and persistence.
-
-### Target Architecture
+OrderFlow follows a layered architecture to maintain clear boundaries between transport handling, business logic, and data storage:
 
 ```text
-                  CLIENT
-                    |
-                    v
-            REST CONTROLLERS
-                    |
-                    v
-              SERVICE LAYER
-                    |
-        +-----------+-----------+
-        |           |           |
-        v           v           v
-     PRODUCT      ORDER      PAYMENT
-     SERVICE     SERVICE     SERVICE
-        |           |           |
-        +-----------+-----------+
-                    |
-                    v
-            REPOSITORY LAYER
-                    |
-                    v
-               POSTGRESQL
-                    |
-            +-------+-------+
-            |               |
-            v               v
-          REDIS     EXTERNAL SERVICES
+CLIENT (HTTP / JSON)
+        │
+        ▼
+CONTROLLER LAYER  ─── [ProductController, HealthController]
+        │             • Maps HTTP verbs and URI routes
+        │             • Deserializes JSON into DTOs (ProductRequest)
+        │             • Performs manual DTO ↔ Entity conversion
+        │             • Dispatches ResponseEntity with appropriate HTTP status codes
+        ▼
+ SERVICE LAYER    ─── [ProductService]
+        │             • Implements core business logic and input validation
+        │             • Enforces domain invariants (valid price, stock, active status)
+        │             • Prevents ID forgery on creation and preserves IDs on update
+        ▼
+REPOSITORY LAYER  ─── [ProductRepository]
+        │             • Abstracts persistence operations (save, findById, findAll, deleteById)
+        │             • Stores products in an in-memory HashMap
+        │             • Generates sequential IDs atomically via AtomicLong
+        ▼
+   DATA STORE     ─── [JVM Heap Memory] (PostgreSQL planned)
 ```
 
-> **Note:** This represents the intended architecture. Components will be introduced as development progresses.
+### Layer Responsibilities
 
-### Current Implemented Structure
+- **Controller Layer (`controller`)**: Handles HTTP requests, extracts request parameters and JSON bodies, converts DTOs to/from internal entities, and returns standard HTTP responses.
+- **Service Layer (`service`)**: Houses business logic and validation rules. It operates independently of the transport protocol (HTTP) and coordinates changes through the repository.
+- **Repository Layer (`repository`)**: Encapsulates data access. Currently manages an in-memory collection, which can be cleanly swapped for Spring Data JPA without altering service contracts.
+- **Model & DTO Layer (`model`, `dto`)**:
+  - `model/Product`: Internal domain representation.
+  - `dto/ProductRequest`: External API contract for client write operations.
+  - `dto/ProductResponse`: External API contract for client read responses.
 
-The codebase currently implements the initial layered foundation inside `com.orderflow.orderflow`:
+---
 
-- `HealthController.java` — REST controller exposing the `/api/v1/health` endpoint.
-- `service/ProductService.java` — Service layer handling product business logic and validation.
-- `repository/ProductRepository.java` — In-memory repository layer backed by a `HashMap` and `AtomicLong` ID generator.
-- `model/Product.java` — Domain model representing product attributes.
+## API Documentation
 
-> **Temporary In-Memory Storage:** `ProductRepository` currently uses an in-memory `HashMap` rather than a database. Product data is not persistent and is lost when the application restarts.
+### Implemented Endpoints
+
+| HTTP Method | Endpoint | Description | Status Code |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Application health check | `200 OK` |
+| `POST` | `/api/v1/products` | Create a new product | `201 Created` |
+| `GET` | `/api/v1/products` | Retrieve all products | `200 OK` |
+| `GET` | `/api/v1/products/{id}` | Retrieve a product by ID | `200 OK` (found) / `404 Not Found` (missing) |
+| `PUT` | `/api/v1/products/{id}` | Update an existing product | `200 OK` (updated) / `404 Not Found` (missing) |
+| `DELETE` | `/api/v1/products/{id}` | Delete a product by ID | `204 No Content` (deleted) / `404 Not Found` (missing) |
+
+> **Note on Client Error Handling:** The service layer validates inputs and throws `IllegalArgumentException` for invalid data (e.g. blank name, non-positive price). Translating these into client-friendly `400 Bad Request` responses will be added in the upcoming Global Exception Handling milestone.
+
+---
+
+### Request & Response Examples
+
+#### 1. Health Check
+- **Request**: `GET /api/v1/health`
+- **Response** (`200 OK`):
+```json
+{
+  "status": "UP",
+  "application": "OrderFlow"
+}
+```
+
+#### 2. Create Product
+- **Request**: `POST /api/v1/products`
+```json
+{
+  "name": "Wireless Mechanical Keyboard",
+  "description": "Compact 75% layout with hot-swappable switches",
+  "price": 89.99,
+  "stockQuantity": 50
+}
+```
+- **Response** (`201 Created`):
+```json
+{
+  "id": 1,
+  "name": "Wireless Mechanical Keyboard",
+  "description": "Compact 75% layout with hot-swappable switches",
+  "price": 89.99,
+  "stockQuantity": 50,
+  "active": true
+}
+```
+
+#### 3. Get All Products
+- **Request**: `GET /api/v1/products`
+- **Response** (`200 OK`):
+```json
+[
+  {
+    "id": 1,
+    "name": "Wireless Mechanical Keyboard",
+    "description": "Compact 75% layout with hot-swappable switches",
+    "price": 89.99,
+    "stockQuantity": 50,
+    "active": true
+  }
+]
+```
+
+#### 4. Get Product by ID
+- **Request**: `GET /api/v1/products/1`
+- **Response** (`200 OK`):
+```json
+{
+  "id": 1,
+  "name": "Wireless Mechanical Keyboard",
+  "description": "Compact 75% layout with hot-swappable switches",
+  "price": 89.99,
+  "stockQuantity": 50,
+  "active": true
+}
+```
+- **Response** (`404 Not Found`): Empty response body.
+
+#### 5. Update Product
+- **Request**: `PUT /api/v1/products/1`
+```json
+{
+  "name": "Wireless Mechanical Keyboard V2",
+  "description": "Upgraded compact 75% layout with silent switches",
+  "price": 94.99,
+  "stockQuantity": 45
+}
+```
+- **Response** (`200 OK`):
+```json
+{
+  "id": 1,
+  "name": "Wireless Mechanical Keyboard V2",
+  "description": "Upgraded compact 75% layout with silent switches",
+  "price": 94.99,
+  "stockQuantity": 45,
+  "active": true
+}
+```
+- **Response** (`404 Not Found`): Empty response body.
+
+#### 6. Delete Product
+- **Request**: `DELETE /api/v1/products/1`
+- **Response** (`204 No Content`): Empty response body.
+- **Response** (`404 Not Found`): Empty response body.
 
 ---
 
@@ -117,11 +220,17 @@ orderflow/
 │
 ├── .mvn/
 │   └── wrapper/
+│       └── maven-wrapper.properties
 │
 ├── src/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── com/orderflow/orderflow/
+│   │   │       ├── controller/
+│   │   │       │   └── ProductController.java
+│   │   │       ├── dto/
+│   │   │       │   ├── ProductRequest.java
+│   │   │       │   └── ProductResponse.java
 │   │   │       ├── model/
 │   │   │       │   └── Product.java
 │   │   │       ├── repository/
@@ -147,182 +256,24 @@ orderflow/
 └── README.md
 ```
 
-As the project grows, the structure will expand into additional dedicated packages for controllers, DTOs, configurations, exceptions, and security.
-
 ---
 
-## Current Features
+## Current Limitations
 
-### Implemented
-- [x] Spring Boot application initialization.
-- [x] Maven project configuration.
-- [x] Java 21 configuration.
-- [x] Embedded Tomcat server setup.
-- [x] Configurable application port.
-- [x] Initial REST controller (`HealthController.java`).
-- [x] Application health-check endpoint (`/api/v1/health`).
-- [x] JSON response generation.
-- [x] `Product` domain model (`model/Product.java`).
-- [x] In-memory `ProductRepository` backed by `HashMap` (`repository/ProductRepository.java`).
-- [x] `ProductService` business logic layer (`service/ProductService.java`).
-
-### ProductService Capabilities
-- Create products
-- Retrieve all products
-- Retrieve a product by ID
-- Update products
-- Delete products
-- Validate product names, prices, and stock quantities
-- Assign IDs through the repository
-- Default newly created products to active (`true`) when no value is provided
-
-> **Note:** The current repository uses an in-memory `HashMap`. Product data is not persistent and is lost when the application restarts.
-
----
-
-## API Endpoints
-
-| Method | Endpoint | Description | Status |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/v1/health` | Check application health | Implemented |
-
-### Health Check API
-
-**Request**
-```http
-GET /api/v1/health
-```
-
-**Response**
-```json
-{
-  "status": "UP",
-  "application": "OrderFlow"
-}
-```
-
-**Local development URL**
-```
-http://localhost:8081/api/v1/health
-```
-
----
-
-## Development Roadmap
-
-The project is being developed in the following phases.
-
-### Phase 1 – Project Foundation
-- [x] Initialize Spring Boot project.
-- [x] Configure Maven and Java 21.
-- [x] Start embedded Tomcat server.
-- [x] Implement health-check endpoint.
-- [x] Verify JSON API response.
-- [x] Initialize local Git repository.
-- [x] Publish initial code to GitHub.
-
-### Phase 2 – Product Management
-- [x] Design Product model (`Product.java`).
-- [x] Implement in-memory repository layer (`ProductRepository.java`).
-- [x] Implement service layer (`ProductService.java`).
-- [x] Implement service-layer product CRUD logic and validation.
-- [ ] Implement Product DTOs (request and response).
-- [ ] Build Product REST controller and CRUD API endpoints.
-- [ ] Add controller/DTO request validation.
-- [ ] Implement global exception handling.
-
-### Phase 3 – Database Integration
-- [ ] Configure PostgreSQL.
-- [ ] Integrate Spring Data JPA.
-- [ ] Configure Hibernate.
-- [ ] Design database relationships.
-- [ ] Implement database migrations.
-- [ ] Test database operations.
-
-### Phase 4 – Authentication and Authorization
-- [ ] Integrate Spring Security.
-- [ ] Implement customer registration.
-- [ ] Implement secure login.
-- [ ] Implement JWT authentication.
-- [ ] Add password hashing using BCrypt.
-- [ ] Implement role-based access control.
-- [ ] Secure protected endpoints.
-
-### Phase 5 – Shopping Cart and Order Management
-- [ ] Implement shopping cart APIs.
-- [ ] Add cart item management.
-- [ ] Implement checkout workflow.
-- [ ] Create order entities.
-- [ ] Implement order placement.
-- [ ] Implement order status lifecycle.
-- [ ] Add order cancellation.
-- [ ] Implement order history.
-
-### Phase 6 – Inventory and Transaction Management
-- [ ] Implement inventory management.
-- [ ] Introduce database transactions.
-- [ ] Understand and implement ACID properties.
-- [ ] Implement concurrency control.
-- [ ] Prevent inventory overselling.
-- [ ] Implement stock reservation.
-- [ ] Handle failed order workflows.
-
-### Phase 7 – Payment Integration
-- [ ] Integrate payment gateway sandbox.
-- [ ] Implement payment initiation.
-- [ ] Implement payment verification.
-- [ ] Handle payment webhooks.
-- [ ] Implement idempotency.
-- [ ] Implement refund workflows.
-- [ ] Handle payment and order failures.
-
-### Phase 8 – Performance and Scalability
-- [ ] Integrate Redis.
-- [ ] Implement caching.
-- [ ] Add API rate limiting.
-- [ ] Implement asynchronous processing.
-- [ ] Explore event-driven architecture.
-- [ ] Explore Apache Kafka.
-- [ ] Optimize database queries.
-
-### Phase 9 – Testing and Deployment
-- [ ] Write unit tests using JUnit 5.
-- [ ] Implement Mockito-based tests.
-- [ ] Add integration tests.
-- [ ] Test concurrent purchase scenarios.
-- [ ] Document APIs using Swagger/OpenAPI.
-- [ ] Containerize using Docker.
-- [ ] Configure deployment.
-- [ ] Add application monitoring.
-
----
-
-## Engineering Challenges
-
-The project will address several important backend engineering challenges.
-
-| Challenge | Intended Approach |
-| :--- | :--- |
-| **Concurrent purchases** | Database locking and transaction management |
-| **Inventory overselling** | Atomic stock updates and concurrency control |
-| **Duplicate requests** | Idempotency keys |
-| **Payment failures** | Payment verification and recovery workflows |
-| **Order consistency** | Transaction management and reliable state transitions |
-| **Slow API responses** | Redis caching and query optimization |
-| **Unauthorized access** | Spring Security and JWT |
-| **Application reliability** | Automated testing and exception handling |
-
-> *These are development objectives, not claims of already implemented functionality.*
+- **In-Memory Storage Only**: Products are stored in a Java `HashMap`. All data resides in JVM heap memory and is lost when the application stops or restarts.
+- **No Thread-Safety on Storage Map**: While `AtomicLong` provides atomic ID generation, `HashMap` itself is not thread-safe under concurrent write operations.
+- **No Persistent Database Integration**: Relational persistence via PostgreSQL and Spring Data JPA is planned for future phases.
+- **No Bean Validation or Centralized Exception Handling**: Validation currently relies on manual programmatic checks in `ProductService`, and uncaught runtime exceptions return standard Spring Boot 500 error responses rather than formatted 400 Bad Request payloads.
+- **Not Production-Ready**: The system is an educational and exploratory backend under active development.
 
 ---
 
 ## Running Locally
 
 ### Prerequisites
-- Java Development Kit 21
-- Git
-- An IDE such as IntelliJ IDEA or Antigravity
-- Maven is available through the included Maven Wrapper.
+- **Java Development Kit (JDK) 21** or higher
+- **Git**
+- Maven is bundled via the included **Maven Wrapper** (`mvnw` / `mvnw.cmd`)
 
 ### 1. Clone the repository
 ```bash
@@ -331,6 +282,7 @@ cd OrderFlow
 ```
 
 ### 2. Run the application
+The application runs on port **`8081`** as configured in `src/main/resources/application.properties` (`server.port=8081`).
 
 **Windows PowerShell:**
 ```powershell
@@ -342,12 +294,11 @@ cd OrderFlow
 ./mvnw spring-boot:run
 ```
 
-### 3. Access the application
-The application currently runs on port `8081`.
-- [http://localhost:8081/api/v1/health](http://localhost:8081/api/v1/health)
+### 3. Access endpoints
+- **Health Check**: [http://localhost:8081/api/v1/health](http://localhost:8081/api/v1/health)
+- **Products API**: [http://localhost:8081/api/v1/products](http://localhost:8081/api/v1/products)
 
-### 4. Build the application
-
+### 4. Build package
 **Windows:**
 ```powershell
 .\mvnw.cmd clean package
@@ -360,71 +311,47 @@ The application currently runs on port `8081`.
 
 ---
 
+## Project Progress & Roadmap
+
+### Progress Summary
+
+| Phase | Description | Status |
+| :--- | :--- | :--- |
+| **Phase 1 – Project Foundation** | Spring Boot 4.1.2, Java 21, Tomcat on port 8081, health check API | **Completed** |
+| **Phase 2 – Product Management** | Model, in-memory repository, service validation, DTOs, CRUD REST endpoints | **Completed** |
+| **Phase 3 – Validation & Error Handling** | Jakarta Bean Validation, `@RestControllerAdvice`, structured error responses | **Next Milestone** |
+| **Phase 4 – Database Integration** | PostgreSQL, Spring Data JPA, Hibernate ORM, migrations | Planned |
+| **Phase 5 – Automated Testing** | Unit tests (JUnit 5, Mockito), integration tests (`MockMvc`) | Planned |
+| **Phase 6 – Authentication & Security** | Spring Security, BCrypt, JWT, role-based access control | Planned |
+| **Phase 7 – Cart & Order Lifecycle** | Shopping cart management, order placement, state transitions | Planned |
+| **Phase 8 – Inventory & Concurrency** | Transactions, concurrency control, preventing overselling | Planned |
+| **Phase 9 – Payments & Resilience** | Payment sandbox, idempotency keys, webhooks | Planned |
+| **Phase 10 – Performance & Scale** | Redis caching, API rate limiting, Apache Kafka event streaming | Planned |
+
+---
+
+## Development & Learning Philosophy
+
+OrderFlow is developed as a hands-on backend engineering project with a focus on understanding core principles:
+- **Foundational Understanding**: Grasping Java 21 and Spring Boot internals rather than relying on auto-configuration as a black box.
+- **Architectural Discipline**: Strict separation between controller transport, service business rules, and repository persistence.
+- **Contract Safety**: Using DTOs to decouple external API contracts from internal entity representations.
+- **Incremental Engineering**: Moving deliberately from working in-memory prototypes to robust persistence and distributed architecture.
+
+---
+
 ## Commit Convention
 
-We use conventional commit-style messages:
+We use conventional commit messages to maintain clean project history:
 
 | Type | Purpose |
 | :--- | :--- |
-| `feat` | New feature |
+| `feat` | New feature or capability |
 | `fix` | Bug fix |
-| `docs` | Documentation changes |
-| `refactor` | Code restructuring |
-| `test` | Test additions or modifications |
-| `chore` | Configuration and maintenance |
-
-**Examples:**
-```bash
-git commit -m "feat: add product management APIs"
-git commit -m "fix: prevent negative inventory"
-git commit -m "docs: update project roadmap"
-```
-
----
-
-## Learning and Development Philosophy
-
-OrderFlow is also a hands-on backend engineering learning project.
-
-The development process emphasizes:
-- Understanding Java and Spring Boot fundamentals.
-- Learning database design and transaction management.
-- Writing and debugging code independently.
-- Understanding architectural decisions and trade-offs.
-- Using AI development tools as assistants rather than substitutes for engineering knowledge.
-- Practicing real-world backend scenarios.
-- Preparing for software development and backend engineering interviews.
-
----
-
-## Project Progress
-
-**Current milestone:** Phase 2 – Product Management (domain model, in-memory repository, and service layer).
-
-| Metric | Current Progress |
-| :--- | :--- |
-| **Development phase** | Phase 2 – Product Management (In Progress) |
-| **Implemented API endpoints** | 1 (`/api/v1/health`) |
-| **Core business modules** | 1 (Product Management – Model, In-Memory Repository, Service) |
-| **Database integration** | Pending (currently using an in-memory `HashMap`) |
-| **Authentication** | Pending |
-| **Payment integration** | Pending |
-
-### Component Status
-- Product model (`Product.java`) — Implemented
-- In-memory product repository (`ProductRepository.java`) — Implemented
-- Product service layer (`ProductService.java`) — Implemented
-- Health check endpoint — Implemented
-
-### Upcoming Milestones
-- Product REST controller
-- REST API endpoints for CRUD operations
-- Request and response DTOs
-- Global exception handling
-- Unit testing
-- PostgreSQL and Spring Data JPA integration
-
-*Progress will be updated as features are implemented, tested, and documented.*
+| `docs` | Documentation updates |
+| `refactor` | Code restructuring without behavioral changes |
+| `test` | Adding or updating tests |
+| `chore` | Build configuration and maintenance |
 
 ---
 
@@ -433,10 +360,5 @@ The development process emphasizes:
 GitHub: [Mahishukla1207/OrderFlow](https://github.com/Mahishukla1207/OrderFlow)
 
 <p align="center">
-  <strong>Built with Java. Powered by Spring Boot. Designed for reliable backend engineering.</strong>
+  <em>OrderFlow – Exploring reliable backend engineering with Java and Spring Boot.</em>
 </p>
-
-<p align="center">
-  <em>OrderFlow – From products to payments, one reliable transaction at a time.</em>
-</p>
-
