@@ -1,5 +1,5 @@
 package com.orderflow.orderflow.controller;
-
+import jakarta.validation.Valid;
 import com.orderflow.orderflow.dto.ProductRequest;
 import com.orderflow.orderflow.dto.ProductResponse;
 import com.orderflow.orderflow.model.Product;
@@ -27,11 +27,15 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductRequest request) {
-        Product product = toEntity(request);
-        Product createdProduct = productService.createProduct(product);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(createdProduct));
-    }
+    public ResponseEntity<ProductResponse> createProduct(
+            @Valid @RequestBody ProductRequest request) {
+
+    Product product = toEntity(request);
+    Product createdProduct = productService.createProduct(product);
+
+    return ResponseEntity.status(HttpStatus.CREATED)
+            .body(toResponse(createdProduct));
+}
 
     @GetMapping
     public ResponseEntity<List<ProductResponse>> getAllProducts() {
@@ -51,13 +55,17 @@ public class ProductController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @RequestBody ProductRequest request) {
-        Product product = toEntity(request);
-        return productService.updateProduct(id, product)
-                .map(this::toResponse)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
+    public ResponseEntity<ProductResponse> updateProduct(
+            @PathVariable Long id,
+            @Valid @RequestBody ProductRequest request) {
+
+    Product product = toEntity(request);
+
+    return productService.updateProduct(id, product)
+            .map(this::toResponse)
+            .map(ResponseEntity::ok)
+            .orElseGet(() -> ResponseEntity.notFound().build());
+}
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {

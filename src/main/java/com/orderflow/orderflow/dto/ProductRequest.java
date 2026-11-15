@@ -1,12 +1,19 @@
 package com.orderflow.orderflow.dto;
-
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import java.math.BigDecimal;
 
 public class ProductRequest {
-
+    @NotBlank //String cannot be null, empty, or whitespace
     private String name;
     private String description;
+    @NotNull  //Value cannot be null
+    @Positive //Number must be positive as price cannot be null or negative
     private BigDecimal price;
+    @NotNull
+    @Min(0)  //Number must be atleast 0
     private Integer stockQuantity;
 
     // No-argument constructor
