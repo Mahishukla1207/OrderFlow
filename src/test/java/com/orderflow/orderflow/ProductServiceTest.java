@@ -99,4 +99,23 @@ class ProductServiceTest {
         assertEquals("Product name must not be null or blank", exception.getMessage());
         verify(productRepository, never()).save(any(Product.class));
     }
+
+    @Test
+    void createProduct_shouldThrowExceptionWhenStockQuantityIsNegative() {
+       // Arrange
+       Product inputProduct = new Product(null, "Test Product", "Test Description", new BigDecimal("99.99"), -5, true);
+
+    // Act & Assert
+    IllegalArgumentException exception = assertThrows(
+            IllegalArgumentException.class,
+            () -> productService.createProduct(inputProduct)
+    );
+
+    assertEquals(
+            "Stock quantity must not be null or negative",
+            exception.getMessage()
+    );
+
+    verify(productRepository, never()).save(any(Product.class));
+}
 }
