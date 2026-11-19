@@ -56,8 +56,14 @@ public class ProductService {
     }
 
     public boolean deleteProduct(Long id) {
-        return productRepository.deleteById(id);
+
+    if (!productRepository.existsById(id)) {
+        return false;
     }
+
+    productRepository.deleteById(id);
+    return true;
+}
 
     private void validateProduct(Product product) {
         if (product == null) {
