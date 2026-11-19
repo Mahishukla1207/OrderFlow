@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -244,7 +245,7 @@ void updateProduct_shouldReturnEmptyWhenProductNotFound() {
 @Test
 void deleteProduct_shouldReturnTrueWhenProductDeleted() {
     // Arrange
-    when(productRepository.deleteById(1L)).thenReturn(true);
+    when(productRepository.existsById(1L)).thenReturn(true);
 
     // Act
     boolean result = productService.deleteProduct(1L);
@@ -254,16 +255,20 @@ void deleteProduct_shouldReturnTrueWhenProductDeleted() {
     verify(productRepository).deleteById(1L);
 }
 
+
 @Test
 void deleteProduct_shouldReturnFalseWhenProductNotFound() {
     // Arrange
-    when(productRepository.deleteById(99L)).thenReturn(false);
+    when(productRepository.existsById(99L)).thenReturn(false);
 
     // Act
     boolean result = productService.deleteProduct(99L);
 
     // Assert
     assertFalse(result);
-    verify(productRepository).deleteById(99L);
+
+    verify(productRepository).existsById(99L);
+    verify(productRepository, never()).deleteById(99L);
 }
+
 }
