@@ -1,24 +1,64 @@
-# OrderFlow – E-commerce Order Management System
+# OrderFlow — E-commerce Order Management System
 
 <p align="center">
-  <strong>An e-commerce order management backend built with Java and Spring Boot.</strong>
+  <strong>A transactional, high-concurrency e-commerce order management backend built with Java 21, Spring Boot, and MySQL.</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-21-orange?logo=openjdk" alt="Java 21"/>
   <img src="https://img.shields.io/badge/Spring%20Boot-4.1.2-6DB33F?logo=springboot" alt="Spring Boot"/>
+  <img src="https://img.shields.io/badge/Spring%20Data%20JPA-Hibernate-blue" alt="Spring Data JPA"/>
+  <img src="https://img.shields.io/badge/MySQL-8.4.13-00758F?logo=mysql" alt="MySQL 8.4.13"/>
   <img src="https://img.shields.io/badge/Maven-Build%20Tool-C71A36?logo=apachemaven" alt="Maven"/>
-  <img src="https://img.shields.io/badge/Tests-23%20Passing-brightgreen" alt="Tests 23 Passing"/>
+  <img src="https://img.shields.io/badge/Tests-53%20Tests%20Passing-brightgreen" alt="53 Tests Passing"/>
   <img src="https://img.shields.io/badge/Status-In%20Development-blue" alt="In Development"/>
 </p>
 
 ---
 
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Technology Stack](#technology-stack)
+- [Implemented Features](#implemented-features)
+  - [1. Product Management](#1-product-management)
+  - [2. Order Management & Concurrency Control](#2-order-management--concurrency-control)
+- [Architecture](#architecture)
+  - [Layered Architecture Breakdown](#layered-architecture-breakdown)
+  - [Mermaid Architecture Diagram](#mermaid-architecture-diagram)
+- [Database Schema & Configuration](#database-schema--configuration)
+  - [Configuration](#configuration)
+  - [Entity Relationship & Tables](#entity-relationship--tables)
+- [API Documentation](#api-documentation)
+  - [Product Endpoints](#product-endpoints)
+  - [Request & Response Examples](#request--response-examples)
+- [Automated Testing & Verification](#automated-testing--verification)
+  - [Test Suite Breakdown (Latest Verified Result: 53 Passing Tests)](#test-suite-breakdown-latest-verified-result-53-passing-tests)
+  - [Testing Methodologies](#testing-methodologies)
+- [Project Structure](#project-structure)
+- [Setup & Installation](#setup--installation)
+  - [Prerequisites](#prerequisites)
+  - [Database Setup](#database-setup)
+  - [Running Locally](#running-locally)
+  - [Running Automated Tests](#running-automated-tests)
+  - [Building for Production](#building-for-production)
+- [Project Status & Roadmap](#project-status--roadmap)
+- [Development & Engineering Principles](#development--engineering-principles)
+
+---
+
 ## Project Overview
 
-**OrderFlow** is an e-commerce order management backend system designed to handle the core operations of an online shopping platform, including product catalog management, inventory control, shopping carts, checkout workflows, payment processing, and order lifecycle tracking.
+**OrderFlow** is an e-commerce order management backend system built with **Java 21**, **Spring Boot 4.1.2**, and **MySQL 8.4.13** as its relational database. It provides the core functionality for online retail operations, handling product catalog administration, real-time inventory tracking, and transactional checkout workflows.
 
-The project is developed using **Java 21** and **Spring Boot**, focusing on building a maintainable, clean-architecture backend while incrementally exploring real-world software engineering concepts. Rather than implementing everything at once, OrderFlow is built step-by-step — establishing architectural boundaries, in-memory data structures, DTO contracts, declarative validations, centralized exception handling, and comprehensive automated testing first, before transitioning to persistent relational databases, concurrency controls, security, and distributed tooling.
+The system is structured using a standard Spring Boot layered architecture, establishing clear separation of concerns across controllers, services, repositories, domain entities, and data transfer objects (DTOs):
+- **ACID Transaction Guarantees**: Complete transactional order placement using Spring `@Transactional`.
+- **Pessimistic Write Locking (`SELECT ... FOR UPDATE`)**: Protects the relevant product rows against overselling during concurrent purchase requests.
+- **Deadlock Risk Reduction**: Deterministic, ascending product ID lock acquisition reduces the risk of deadlocks when concurrent multi-product orders involve the same items.
+- **Decoupled API Contracts**: Request and response Data Transfer Objects (DTOs) prevent entity exposure.
+- **Declarative Validation**: Jakarta Bean Validation guarantees input hygiene at the API boundary.
+- **Resilient Error Handling**: Centralized exception advice translates domain exceptions into standard HTTP error responses.
+- **Automated Testing Suite**: 53 passing tests across unit, web slice, and database integration layers as the latest verified test result.
 
 ---
 
@@ -26,129 +66,266 @@ The project is developed using **Java 21** and **Spring Boot**, focusing on buil
 
 | Technology | Purpose | Status |
 | :--- | :--- | :--- |
-| **Java 21** | Core programming language | In use |
-| **Spring Boot 4.1.2** | Application framework | In use |
-| **Maven** | Dependency management and build automation | In use |
-| **Spring Web (MVC)** | REST API routing, request handling, and JSON serialization | In use |
-| **Jakarta Bean Validation** | Declarative payload constraint validation (`spring-boot-starter-validation`) | In use |
-| **Global Exception Handling** | Centralized `@RestControllerAdvice` exception and validation error handling | In use |
-| **JUnit Jupiter & Mockito** | Automated unit and web layer slice testing (`MockMvc`, `@WebMvcTest`) | In use |
-| **REST APIs** | HTTP-based client-server communication | In use |
-| **Git & GitHub** | Version control and repository hosting | In use |
-| **MySQL 8.4 LTS** | Relational database persistence | Planned |
-| **Spring Data JPA & Hibernate** | ORM and repository persistence | Planned |
-| **Spring Security & JWT** | Authentication, authorization, and RBAC | Planned |
-| **Redis** | In-memory caching and rate limiting | Planned |
-| **Docker** | Containerization and local environment setup | Planned |
-| **Apache Kafka** | Asynchronous event-driven processing | Future enhancement |
+| **Java 21** | Core language (LTS release using modern language features) | In Use |
+| **Spring Boot 4.1.2** | Application framework, dependency injection, auto-configuration | In Use |
+| **Spring Data JPA & Hibernate** | Object-Relational Mapping (ORM) and repository persistence | In Use |
+| **MySQL 8.4.13 LTS** | Relational database persistence | In Use |
+| **Maven** | Build automation and dependency management | In Use |
+| **Spring Web (MVC)** | REST API routing, request validation, and JSON serialization | In Use |
+| **Jakarta Bean Validation** | Declarative payload constraint validation (`jakarta.validation`) | In Use |
+| **Global Exception Handling** | Centralized `@RestControllerAdvice` error dispatching | In Use |
+| **JUnit 5 & Mockito** | Unit testing, mocking, and behavioral verification | In Use |
+| **Spring Boot Test & MockMvc** | Web-layer slice tests and full database integration tests | In Use |
+| **Spring Security & JWT** | User authentication, token authorization, and RBAC | Planned |
+| **Redis** | In-memory distributed caching and rate limiting | Planned |
+| **Docker** | Containerization for reproducible environments | Planned |
+| **Apache Kafka** | Asynchronous event streaming for orders and inventory | Future Milestone |
 
 ---
 
-## Current Features
+## Implemented Features
 
-- **Application Health Check**: Endpoint (`/api/v1/health`) returning server status (`UP`) and application name (`OrderFlow`).
-- **Product Domain Model**: Encapsulated `Product` domain model with `id`, `name`, `description`, `price`, `stockQuantity`, and `active` attributes.
-- **In-Memory Storage**: `ProductRepository` backed by a `HashMap` for storage with `AtomicLong` for atomic ID generation.
-- **Service Layer & Business Rules**:
-  - Validates that product names are not null or blank.
-  - Enforces positive product prices (`price > 0`) using `BigDecimal.compareTo`.
-  - Ensures non-negative stock counts (`stockQuantity >= 0`).
-  - Defaults newly created products to `active = true` when null.
-  - Enforces server-assigned IDs during creation and preserves IDs during updates.
-- **Data Transfer Objects (DTOs)**:
-  - `ProductRequest`: Clean client input contract (`name`, `description`, `price`, `stockQuantity`), preventing client tampering with `id` or `active`.
-  - `ProductResponse`: Clean client output representation exposing complete product details.
-  - `ErrorResponse`: Standardized error DTO with `status`, `error`, and `messages` (`List<String>`) fields.
-- **Declarative Bean Validation**:
-  - Integrated `spring-boot-starter-validation`.
-  - Constraints on `ProductRequest`: `@NotBlank` on `name`, `@NotNull` & `@Positive` on `price`, and `@NotNull` & `@Min(0)` on `stockQuantity`.
-  - Activated request body validation via `@Valid` on `POST` and `PUT` controller endpoints.
-- **Global Exception Handling (`@RestControllerAdvice`)**:
-  - Intercepts `MethodArgumentNotValidException` to extract field validation errors and format them as `fieldName: errorMessage`.
-  - Intercepts `IllegalArgumentException` from service validation to return structured `ErrorResponse` payloads.
-  - Returns standard HTTP `400 Bad Request` with consistent JSON payloads across all validation and argument errors.
-- **Manual DTO Mapping**: Explicit, decoupling conversions between DTOs and domain models directly in the controller layer.
-- **Complete Product REST API**: Full CRUD endpoints with standard HTTP status codes (`201 Created`, `200 OK`, `204 No Content`, `400 Bad Request`, `404 Not Found`).
-- **Comprehensive Automated Testing**: Rigorous unit and web layer slice tests covering business logic and REST endpoints.
+### 1. Product Management
+- **Full CRUD API**: Create, retrieve, update, and delete products under `/api/v1/products`.
+- **Data Transfer Objects**:
+  - `ProductRequest`: Clean client input contract (`name`, `description`, `price`, `stockQuantity`), preventing unauthorized modification of `id` or `active`.
+  - `ProductResponse`: Clean presentation contract returning product state.
+- **Declarative Validation**:
+  - `@NotBlank` for product name.
+  - `@NotNull` and `@Positive` for price (`BigDecimal`).
+  - `@NotNull` and `@Min(0)` for stock quantity.
+- **Domain Business Rules**:
+  - Automatic defaulting of `active = true` for newly created products when unspecified.
+  - Server-assigned IDs on creation; existing IDs preserved on updates.
+  - Rejection of invalid prices, blank names, or negative inventory.
+- **Relational Persistence**: Persisted in MySQL via `ProductRepository` extending `JpaRepository<Product, Long>`.
+
+### 2. Order Management & Concurrency Control
+- **Domain Entities & Relationships**:
+  - `Order`: Represents the aggregate root (`id`, `totalAmount`, `status`, `createdAt`, `orderItems`).
+  - `OrderItem`: Represents line items (`id`, `order_id`, `product_id`, `quantity`, `unitPrice`, `subtotal`).
+  - Bidirectional `@OneToMany` mapping with `CascadeType.ALL` and `orphanRemoval = true`.
+  - Helper methods `order.addOrderItem()` and `order.removeOrderItem()` maintain referential integrity.
+- **Order Lifecycle**: Managed through the `OrderStatus` enum (`PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`).
+- **Transactional Order Placement**:
+  - `OrderService.placeOrder(OrderRequest)` executes within a single `@Transactional` boundary.
+  - Validates that every requested product exists and is active (`Boolean.TRUE.equals(active)`).
+  - Verifies available inventory (`stockQuantity >= requestedQuantity`).
+  - Automatically decrements product stock upon successful placement.
+  - Calculates line subtotals (`unitPrice * quantity`) and order total using immutable `BigDecimal` arithmetic.
+  - Client-supplied prices or statuses are ignored; prices are sourced exclusively from persisted `Product` records.
+- **Pessimistic Write Locking (`PESSIMISTIC_WRITE`)**:
+  - `ProductRepository.findByIdWithPessimisticLock(Long id)` executes `SELECT ... FOR UPDATE`.
+  - Secures exclusive row-level locks on the relevant product rows in MySQL, protecting them against overselling during concurrent purchase requests.
+- **Ascending Lock Acquisition Order**:
+  - Incoming product IDs are sorted and locked strictly in **ascending numerical order** (`$ID_1 < ID_2 < \dots < ID_n$`), reducing deadlock risk when concurrent multi-product orders request overlapping products in different sequences.
+- **Strict Input Validation & Duplicate Protection**:
+  - `@Positive` and `@NotNull` on `OrderItemRequest.productId`.
+  - Rejects duplicate product IDs within a single request with clear validation errors.
+  - Rejects null, zero, or negative order quantities.
+- **Optimized Eager Retrieval**:
+  - `OrderRepository.findByIdWithItems(Long id)` uses `LEFT JOIN FETCH o.orderItems oi LEFT JOIN FETCH oi.product`.
+  - Eagerly loads line items and associated product metadata for the retrieved order in a single query, preventing `LazyInitializationException` and avoiding N+1 query overhead during order detail retrieval.
+- **Custom Domain Exceptions**:
+  - `ProductNotFoundException` (mapped to HTTP 404).
+  - `InactiveProductException` (mapped to HTTP 400).
+  - `InsufficientStockException` (mapped to HTTP 400).
 
 ---
 
 ## Architecture
 
-OrderFlow follows a layered architecture to maintain clear boundaries between transport handling, business logic, error handling, and data storage:
+OrderFlow implements a clean, layered architecture ensuring separation of concerns:
 
-```text
-CLIENT (HTTP / JSON)
-        │
-        ▼
-CONTROLLER LAYER  ─── [ProductController, HealthController]
-        │             • Maps HTTP verbs and URI routes
-        │             • Validates request bodies with @Valid
-        │             • Deserializes JSON into DTOs (ProductRequest)
-        │             • Performs manual DTO ↔ Entity conversion
-        │             • Dispatches ResponseEntity with appropriate HTTP status codes
-        ▼
- SERVICE LAYER    ─── [ProductService]
-        │             • Implements core business logic and programmatic validation
-        │             • Enforces domain invariants (valid price, stock, active status)
-        │             • Prevents ID forgery on creation and preserves IDs on update
-        ▼
-REPOSITORY LAYER  ─── [ProductRepository]
-        │             • Abstracts persistence operations (save, findById, findAll, deleteById)
-        │             • Stores products in an in-memory HashMap
-        │             • Generates sequential IDs atomically via AtomicLong
-        ▼
-   DATA STORE     ─── [JVM Heap Memory] (MySQL 8.4 LTS planned)
-
-─────────────────────────────────────────────────────────────────────────────
-GLOBAL ERROR HANDLING ─── [GlobalExceptionHandler] (@RestControllerAdvice)
-                          • Catches MethodArgumentNotValidException & IllegalArgumentException
-                          • Translates exceptions into standardized ErrorResponse payloads (HTTP 400)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Client (HTTP / JSON)                    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Controller Layer                       │
+│      ProductController  │  HealthController                 │
+│      • Handles HTTP requests & REST routing                 │
+│      • Validates payloads with @Valid                       │
+│      • Transforms Entities <-> DTOs                         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Service Layer                         │
+│      ProductService  │  OrderService                        │
+│      • Enforces domain validation & business invariants     │
+│      • Manages transactional boundaries (@Transactional)    │
+│      • Coordinates stock reduction & order creation         │
+│      • Enforces ascending lock acquisition to avoid deadlock│
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Repository Layer                       │
+│      ProductRepository  │  OrderRepository                  │
+│      • Spring Data JPA abstraction                          │
+│      • Pessimistic Locking: SELECT ... FOR UPDATE           │
+│      • Eager JOIN FETCH query optimization                  │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    MySQL 8.4 LTS Database                   │
+│      Tables: products  │  orders  │  order_items            │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Layer Responsibilities
+### Layered Architecture Breakdown
 
-- **Controller Layer (`controller`)**: Handles HTTP requests, extracts parameters, triggers Bean Validation via `@Valid`, converts DTOs to/from internal entities, and dispatches HTTP responses.
-- **Service Layer (`service`)**: Houses business logic and domain validation rules. It operates independently of the transport protocol (HTTP) and coordinates changes through the repository.
-- **Repository Layer (`repository`)**: Encapsulates data access. Currently manages an in-memory collection, which will be swapped for Spring Data JPA and MySQL without altering service contracts.
-- **Exception Layer (`exception`)**: Centralizes application-wide error handling using `@RestControllerAdvice`, converting uncaught validation and argument exceptions into uniform `ErrorResponse` objects.
-- **Model & DTO Layer (`model`, `dto`)**:
-  - `model/Product`: Internal domain representation.
-  - `dto/ProductRequest`: External API contract for client write operations with Bean Validation constraints.
-  - `dto/ProductResponse`: External API contract for client read responses.
-  - `dto/ErrorResponse`: Standardized structure for error and validation error reporting.
+1. **Controller Layer (`com.orderflow.orderflow.controller`)**: Exposes REST endpoints, validates incoming JSON using Jakarta Bean Validation (`@Valid`), converts DTOs to domain models, and returns standard HTTP status codes.
+2. **Service Layer (`com.orderflow.orderflow.service`)**: Encapsulates business logic, transactional boundaries (`@Transactional`), domain validations, and pricing calculations.
+3. **Repository Layer (`com.orderflow.orderflow.repository`)**: Interfaces extending `JpaRepository` providing CRUD queries, custom JPQL queries, and database row-level locking.
+4. **Model Layer (`com.orderflow.orderflow.model`)**: JPA entities representing core database tables and business aggregates (`Product`, `Order`, `OrderItem`, `OrderStatus`).
+5. **DTO Layer (`com.orderflow.orderflow.dto`)**: Strictly separates public API representations from internal database models (`ProductRequest`, `ProductResponse`, `OrderRequest`, `OrderItemRequest`, `OrderResponse`, `OrderItemResponse`, `ErrorResponse`).
+6. **Exception Handling Layer (`com.orderflow.orderflow.exception`)**: Central `@RestControllerAdvice` converting exceptions into standardized, client-friendly error structures.
+
+### Mermaid Architecture Diagram
+
+```mermaid
+flowchart TD
+    Client["Client / Frontend"] -->|HTTP / JSON| PC["ProductController\n(/api/v1/products)"]
+    Client -.->|Upcoming| OC["OrderController\n(Pending /api/v1/orders)"]
+    
+    PC -->|ProductRequest / DTO| PS["ProductService"]
+    OC -.->|OrderRequest / DTO| OS["OrderService"]
+    
+    subgraph ServiceLayer["Service Layer (Business Logic & Transactions)"]
+        PS
+        OS
+    end
+    
+    subgraph TransactionBoundary["@Transactional Boundary"]
+        OS -->|"1. Lock in Ascending ID (FOR UPDATE)"| PR["ProductRepository"]
+        OS -->|"2. Deduct Inventory & Verify Active"| PR
+        OS -->|"3. Cascade Save Order & Items"| OR["OrderRepository"]
+    end
+    
+    PS --> PR
+    
+    subgraph Database["MySQL 8.4 LTS Persistence"]
+        PR --> TableP[("products table")]
+        OR --> TableO[("orders table")]
+        OR --> TableOI[("order_items table")]
+    end
+    
+    subgraph ErrorHandling["Centralized Exception Handling"]
+        GEH["GlobalExceptionHandler\n(@RestControllerAdvice)"]
+        GEH -->|HTTP 400 / 404| ErrorResp["ErrorResponse DTO"]
+    end
+    
+    OS -. Throws Domain Exceptions .-> GEH
+    PS -. Throws Domain Exceptions .-> GEH
+```
+
+---
+
+## Database Schema & Configuration
+
+### Configuration
+
+Database connection settings are configured in `src/main/resources/application.properties`. Environment variables can be used to externalize credentials:
+
+```properties
+spring.application.name=orderflow
+server.port=8081
+
+# MySQL Database DataSource
+spring.datasource.url=${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/orderflow}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME:root}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD:your_password}
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA & Hibernate ORM
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+### Entity Relationship & Tables
+
+```mermaid
+erDiagram
+    products ||--o{ order_items : "referenced by"
+    orders ||--|{ order_items : "contains (1..N)"
+
+    products {
+        BIGINT id PK
+        VARCHAR name
+        VARCHAR description
+        DECIMAL price
+        INT stock_quantity
+        BOOLEAN active
+    }
+
+    orders {
+        BIGINT id PK
+        DECIMAL total_amount
+        VARCHAR status
+        DATETIME created_at
+    }
+
+    order_items {
+        BIGINT id PK
+        BIGINT order_id FK
+        BIGINT product_id FK
+        INT quantity
+        DECIMAL unit_price
+        DECIMAL subtotal
+    }
+```
+
+1. **`products`**:
+   - `id`: Primary key (Auto Increment).
+   - `name`: Product title (Non-null).
+   - `description`: Detailed description.
+   - `price`: Unit price stored as `DECIMAL(38,2)` to avoid floating-point errors.
+   - `stock_quantity`: Available inventory count.
+   - `active`: Boolean flag indicating if product can be ordered.
+2. **`orders`**:
+   - `id`: Primary key (Auto Increment).
+   - `total_amount`: Total order price (`DECIMAL(38,2)`).
+   - `status`: String representation of `OrderStatus` (`PENDING`, `CONFIRMED`, `CANCELLED`, `COMPLETED`).
+   - `created_at`: Order placement timestamp.
+3. **`order_items`**:
+   - `id`: Primary key (Auto Increment).
+   - `order_id`: Foreign key referencing `orders.id` (associated items are managed through JPA `CascadeType.ALL` and `orphanRemoval = true`).
+   - `product_id`: Foreign key referencing `products.id`.
+   - `quantity`: Number of units ordered.
+   - `unit_price`: Price per unit locked at the time of purchase.
+   - `subtotal`: Calculated total for this line item (`quantity * unit_price`).
 
 ---
 
 ## API Documentation
 
-### Implemented Endpoints
+### Product Endpoints
 
-| HTTP Method | Endpoint | Description | Status Code |
+| HTTP Verb | Endpoint | Description | Status Codes |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/v1/health` | Application health check | `200 OK` |
-| `POST` | `/api/v1/products` | Create a new product | `201 Created` / `400 Bad Request` |
+| `POST` | `/api/v1/products` | Create a new product | `201 Created`, `400 Bad Request` |
 | `GET` | `/api/v1/products` | Retrieve all products | `200 OK` |
-| `GET` | `/api/v1/products/{id}` | Retrieve a product by ID | `200 OK` (found) / `404 Not Found` (missing) |
-| `PUT` | `/api/v1/products/{id}` | Update an existing product | `200 OK` (updated) / `400 Bad Request` / `404 Not Found` (missing) |
-| `DELETE` | `/api/v1/products/{id}` | Delete a product by ID | `204 No Content` (deleted) / `404 Not Found` (missing) |
+| `GET` | `/api/v1/products/{id}` | Retrieve single product by ID | `200 OK`, `404 Not Found` |
+| `PUT` | `/api/v1/products/{id}` | Update existing product | `200 OK`, `400 Bad Request`, `404 Not Found` |
+| `DELETE` | `/api/v1/products/{id}` | Delete product by ID | `204 No Content`, `404 Not Found` |
+
+> [!NOTE]
+> The `OrderController` REST endpoints (e.g., `POST /api/v1/orders`, `GET /api/v1/orders/{id}`) are scheduled for the next milestone. Currently, all order management logic is fully implemented and tested via `OrderService`.
 
 ---
 
 ### Request & Response Examples
 
-#### 1. Health Check
-- **Request**: `GET /api/v1/health`
-- **Response** (`200 OK`):
-```json
-{
-  "status": "UP",
-  "application": "OrderFlow"
-}
-```
-
-#### 2. Create Product (Valid Request)
-- **Request**: `POST /api/v1/products`
+#### 1. Create Product (Valid Request)
+- **POST** `/api/v1/products`
+- **Request Body**:
 ```json
 {
   "name": "Wireless Mechanical Keyboard",
@@ -169,12 +346,13 @@ GLOBAL ERROR HANDLING ─── [GlobalExceptionHandler] (@RestControllerAdvice)
 }
 ```
 
-#### 3. Create Product (Invalid Request — Validation Failure)
-- **Request**: `POST /api/v1/products`
+#### 2. Create Product (Validation Failure)
+- **POST** `/api/v1/products`
+- **Request Body**:
 ```json
 {
   "name": "",
-  "description": "Invalid product with blank name and negative price",
+  "description": "Invalid product payload",
   "price": -10.00,
   "stockQuantity": -5
 }
@@ -192,8 +370,8 @@ GLOBAL ERROR HANDLING ─── [GlobalExceptionHandler] (@RestControllerAdvice)
 }
 ```
 
-#### 4. Get All Products
-- **Request**: `GET /api/v1/products`
+#### 3. Get All Products
+- **GET** `/api/v1/products`
 - **Response** (`200 OK`):
 ```json
 [
@@ -208,29 +386,15 @@ GLOBAL ERROR HANDLING ─── [GlobalExceptionHandler] (@RestControllerAdvice)
 ]
 ```
 
-#### 5. Get Product by ID
-- **Request**: `GET /api/v1/products/1`
-- **Response** (`200 OK`):
-```json
-{
-  "id": 1,
-  "name": "Wireless Mechanical Keyboard",
-  "description": "Compact 75% layout with hot-swappable switches",
-  "price": 89.99,
-  "stockQuantity": 50,
-  "active": true
-}
-```
-- **Response** (`404 Not Found`): Empty response body.
-
-#### 6. Update Product
-- **Request**: `PUT /api/v1/products/1`
+#### 4. Update Product
+- **PUT** `/api/v1/products/1`
+- **Request Body**:
 ```json
 {
   "name": "Wireless Mechanical Keyboard V2",
-  "description": "Upgraded compact 75% layout with silent switches",
-  "price": 94.99,
-  "stockQuantity": 45
+  "description": "Upgraded with silent switches and PBT keycaps",
+  "price": 99.99,
+  "stockQuantity": 40
 }
 ```
 - **Response** (`200 OK`):
@@ -238,47 +402,51 @@ GLOBAL ERROR HANDLING ─── [GlobalExceptionHandler] (@RestControllerAdvice)
 {
   "id": 1,
   "name": "Wireless Mechanical Keyboard V2",
-  "description": "Upgraded compact 75% layout with silent switches",
-  "price": 94.99,
-  "stockQuantity": 45,
+  "description": "Upgraded with silent switches and PBT keycaps",
+  "price": 99.99,
+  "stockQuantity": 40,
   "active": true
 }
 ```
-- **Response** (`404 Not Found`): Empty response body.
 
-#### 7. Delete Product
-- **Request**: `DELETE /api/v1/products/1`
+#### 5. Delete Product
+- **DELETE** `/api/v1/products/1`
 - **Response** (`204 No Content`): Empty response body.
-- **Response** (`404 Not Found`): Empty response body.
 
 ---
 
-## Automated Testing
+## Automated Testing & Verification
 
-OrderFlow emphasizes high test coverage through isolated unit testing and web-layer slice tests using `@WebMvcTest` and `MockMvc`.
+Automated testing is central to OrderFlow. The test suite combines unit tests, web-layer slice tests, and full database integration tests against MySQL. The latest verified test run produced 53 passing tests with 0 failures and 0 errors.
 
-### Test Suite Summary
+### Test Suite Breakdown (Latest Verified Result: 53 Passing Tests)
 
-| Test Class | Scope | Passing Tests | Failures | Errors |
-| :--- | :--- | :---: | :---: | :---: |
-| **`ProductServiceTest`** | Unit tests for service layer business rules & repository interactions | **12** | 0 | 0 |
-| **`ProductControllerTest`** | Web-layer slice tests using `MockMvc` and `@WebMvcTest` | **10** | 0 | 0 |
-| **`OrderflowApplicationTests`** | Spring Boot context load verification | **1** | 0 | 0 |
-| **Total** | | **23** | **0** | **0** |
+| Test Class | Category / Scope | Tests Run | Failures | Errors | Result |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **`ProductControllerTest`** | Web slice tests (`@WebMvcTest`, `MockMvc`) | **10** | 0 | 0 | PASSED |
+| **`ProductServiceTest`** | Unit tests for product business logic & validations | **12** | 0 | 0 | PASSED |
+| **`OrderDtoTest`** | DTO constraint validation & encapsulation tests | **7** | 0 | 0 | PASSED |
+| **`OrderRepositoryTest`** | Data JPA repository tests (save, cascade, findByStatus) | **2** | 0 | 0 | PASSED |
+| **`OrderServiceTest`** | Unit tests for order placement, calculations & lock ordering | **13** | 0 | 0 | PASSED |
+| **`OrderServiceIntegrationTest`** | Full DB integration tests (transactions, rollback, concurrency) | **4** | 0 | 0 | PASSED |
+| **`GlobalExceptionHandlerTest`** | Exception handler mapping & HTTP status verification | **4** | 0 | 0 | PASSED |
+| **`OrderflowApplicationTests`** | Spring Boot application context load verification | **1** | 0 | 0 | PASSED |
+| **Total** | | **53** | **0** | **0** | **BUILD SUCCESS** |
 
-### Controller Test Coverage Details
+*Note: Test counts reflect the latest verified test execution (`mvn test`) rather than a permanent guarantee or code coverage percentage.*
 
-`ProductControllerTest.java` thoroughly validates all web-layer interactions as a slice test using `@WebMvcTest` and `MockMvc`:
-- **Product Creation**: Verifies valid `POST /api/v1/products` returns `201 Created` with expected JSON payload.
-- **Invalid Product Request**: Verifies malformed payloads trigger validation rejection returning `400 Bad Request`.
-- **Validation Error Structure**: Verifies `ErrorResponse` structure containing `status`, `error`, and field-specific error `messages`.
-- **Get All Products**: Verifies `GET /api/v1/products` returns `200 OK` and a list of product responses.
-- **Get Product by ID**: Verifies `GET /api/v1/products/{id}` returns `200 OK` and the matching product payload.
-- **Product Not Found**: Verifies `GET /api/v1/products/{id}` returns `404 Not Found` when product does not exist.
-- **Update Product**: Verifies valid `PUT /api/v1/products/{id}` returns `200 OK` with updated attributes.
-- **Update Non-Existing Product**: Verifies `PUT /api/v1/products/{id}` returns `404 Not Found` for non-existent IDs.
-- **Delete Product**: Verifies `DELETE /api/v1/products/{id}` returns `204 No Content` upon successful deletion.
-- **Delete Non-Existing Product**: Verifies `DELETE /api/v1/products/{id}` returns `404 Not Found` when attempting to delete a missing product.
+### Testing Methodologies
+
+1. **Web Layer Slice Testing (`ProductControllerTest`)**:
+   - Uses `@WebMvcTest(ProductController.class)` and `MockMvc` to test controller routing, status codes, and Bean Validation in complete isolation from the database.
+2. **Unit Testing with Mockito (`ProductServiceTest`, `OrderServiceTest`)**:
+   - Mocks repository calls to test business invariants, stock deduction calculations, BigDecimal accuracy, and exception throwing.
+   - Validates that pessimistic locks are requested in strictly ascending product ID order using Mockito's `inOrder` verification.
+3. **Database Integration Testing (`OrderServiceIntegrationTest`)**:
+   - **Persistence & Cascade**: Verifies that placing an order persists records in `orders` and `order_items` tables and decrements inventory in `products`.
+   - **Transaction Rollback**: Orders item 1 (valid) followed by item 2 (insufficient stock). Verifies that when item 2 throws `InsufficientStockException`, item 1's stock reduction is rolled back in MySQL, leaving zero orphaned orders.
+   - **Concurrency & Overselling Prevention**: Spawns multiple threads simultaneously attempting to purchase remaining stock. Verifies that pessimistic row locking (`SELECT ... FOR UPDATE`) protects the relevant product rows against overselling, allowing valid requests to succeed while rejecting requests that exceed available inventory.
+   - **Eager Retrieval**: Verifies that `getOrderById()` fetches all items and product details via `JOIN FETCH` without throwing `LazyInitializationException`.
 
 ---
 
@@ -286,11 +454,9 @@ OrderFlow emphasizes high test coverage through isolated unit testing and web-la
 
 ```text
 orderflow/
-│
 ├── .mvn/
 │   └── wrapper/
 │       └── maven-wrapper.properties
-│
 ├── src/
 │   ├── main/
 │   │   ├── java/
@@ -299,32 +465,43 @@ orderflow/
 │   │   │       │   └── ProductController.java
 │   │   │       ├── dto/
 │   │   │       │   ├── ErrorResponse.java
+│   │   │       │   ├── OrderItemRequest.java
+│   │   │       │   ├── OrderItemResponse.java
+│   │   │       │   ├── OrderRequest.java
+│   │   │       │   ├── OrderResponse.java
 │   │   │       │   ├── ProductRequest.java
 │   │   │       │   └── ProductResponse.java
 │   │   │       ├── exception/
-│   │   │       │   └── GlobalExceptionHandler.java
+│   │   │       │   ├── GlobalExceptionHandler.java
+│   │   │       │   ├── InactiveProductException.java
+│   │   │       │   ├── InsufficientStockException.java
+│   │   │       │   └── ProductNotFoundException.java
 │   │   │       ├── model/
+│   │   │       │   ├── Order.java
+│   │   │       │   ├── OrderItem.java
+│   │   │       │   ├── OrderStatus.java
 │   │   │       │   └── Product.java
 │   │   │       ├── repository/
+│   │   │       │   ├── OrderRepository.java
 │   │   │       │   └── ProductRepository.java
 │   │   │       ├── service/
+│   │   │       │   ├── OrderService.java
 │   │   │       │   └── ProductService.java
 │   │   │       ├── HealthController.java
 │   │   │       └── OrderflowApplication.java
-│   │   │
 │   │   └── resources/
 │   │       └── application.properties
-│   │
 │   └── test/
 │       └── java/
 │           └── com/orderflow/orderflow/
-│               ├── controller/
-│               │   └── ProductControllerTest.java
+│               ├── GlobalExceptionHandlerTest.java
+│               ├── OrderDtoTest.java
 │               ├── OrderflowApplicationTests.java
+│               ├── OrderRepositoryTest.java
+│               ├── OrderServiceIntegrationTest.java
+│               ├── OrderServiceTest.java
+│               ├── ProductControllerTest.java
 │               └── ProductServiceTest.java
-│
-├── .gitattributes
-├── .gitignore
 ├── mvnw
 ├── mvnw.cmd
 ├── pom.xml
@@ -333,121 +510,121 @@ orderflow/
 
 ---
 
-## Current Limitations
-
-- **In-Memory Storage Only**: Products are stored in a Java `HashMap`. All data resides in JVM heap memory and is lost when the application stops or restarts.
-- **No Thread-Safety on Storage Map**: While `AtomicLong` provides atomic ID generation, `HashMap` itself is not thread-safe under concurrent write operations.
-- **Persistent Database Integration (Upcoming)**: Relational persistence via MySQL 8.4 LTS and Spring Data JPA + Hibernate is planned for the next development phase.
-- **Not Production-Ready**: The system is an educational and exploratory backend under active development.
-
----
-
-## Running Locally
+## Setup & Installation
 
 ### Prerequisites
 - **Java Development Kit (JDK) 21** or higher
+- **MySQL Server 8.4 LTS** (or compatible 8.0+)
 - **Git**
-- Maven is bundled via the included **Maven Wrapper** (`mvnw` / `mvnw.cmd`)
+- Maven is bundled via the included Maven Wrapper (`./mvnw` or `mvnw.cmd`)
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/Mahishukla1207/OrderFlow.git
-cd OrderFlow
+### Database Setup
+
+Log into your local MySQL server and create the application database:
+
+```sql
+CREATE DATABASE orderflow;
 ```
 
-### 2. Run the application
-The application runs on port **`8081`** as configured in `src/main/resources/application.properties` (`server.port=8081`).
+Optionally set environment variables for your database credentials:
 
-**Windows PowerShell:**
+```bash
+# Linux / macOS
+export SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/orderflow"
+export SPRING_DATASOURCE_USERNAME="your_username"
+export SPRING_DATASOURCE_PASSWORD="your_password"
+```
+
 ```powershell
+# Windows PowerShell
+$env:SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/orderflow"
+$env:SPRING_DATASOURCE_USERNAME="your_username"
+$env:SPRING_DATASOURCE_PASSWORD="your_password"
+```
+
+### Running Locally
+
+Run the application with the Maven Wrapper on port **8081**:
+
+```powershell
+# Windows PowerShell
 .\mvnw.cmd spring-boot:run
 ```
 
-**Linux / macOS:**
 ```bash
+# Linux / macOS
 ./mvnw spring-boot:run
 ```
 
-### 3. Run automated tests
-Execute the full test suite (23 passing tests):
-
-**Windows PowerShell:**
-```powershell
-.\mvnw.cmd test
-```
-
-**Linux / macOS:**
-```bash
-./mvnw test
-```
-
-### 4. Access endpoints
+Once started, verify the health endpoint:
 - **Health Check**: [http://localhost:8081/api/v1/health](http://localhost:8081/api/v1/health)
 - **Products API**: [http://localhost:8081/api/v1/products](http://localhost:8081/api/v1/products)
 
-### 5. Build package
-**Windows:**
+### Running Automated Tests
+
+Execute the complete automated test suite (latest verified run: 53 passing tests):
+
 ```powershell
+# Windows PowerShell
+.\mvnw.cmd test
+```
+
+```bash
+# Linux / macOS
+./mvnw test
+```
+
+### Building for Production
+
+Package the application into an executable JAR:
+
+```powershell
+# Windows PowerShell
 .\mvnw.cmd clean package
 ```
 
-**Linux / macOS:**
 ```bash
+# Linux / macOS
 ./mvnw clean package
 ```
 
----
-
-## Project Progress & Roadmap
-
-### Progress Summary
-
-| Phase | Milestone | Scope | Status |
-| :--- | :--- | :--- | :--- |
-| **Phase 1** | **Project Foundation** | Spring Boot 4.1.2, Java 21, Tomcat on port 8081, health check API | **Completed** |
-| **Phase 2** | **Product Management & CRUD APIs** | Product domain model, in-memory repository, service business rules, DTOs, full CRUD REST endpoints | **Completed** |
-| **Phase 3** | **Validation & Error Handling** | Jakarta Bean Validation (`@Valid`), `@RestControllerAdvice` global exception handling, `ErrorResponse` DTO | **Completed** |
-| **Phase 4** | **Automated Testing** | Unit testing (`ProductServiceTest` - 12 tests), web slice testing (`ProductControllerTest` - 10 tests), context test (1 test) — 23 tests total | **Completed** |
-| **Phase 5** | **Database Integration** | MySQL 8.4 LTS, Spring Data JPA, Hibernate ORM, database migrations | **Next Milestone** (Planned) |
-| **Phase 6** | **Authentication & Security** | Spring Security, BCrypt, JWT, role-based access control (RBAC) | Planned |
-| **Phase 7** | **Cart & Order Lifecycle** | Shopping cart management, checkout workflow, order placement, state transitions | Planned |
-| **Phase 8** | **Inventory & Concurrency** | Transactions, concurrency control, atomic stock reduction, preventing overselling | Planned |
-| **Phase 9** | **Payments & Resilience** | Payment gateway sandbox, idempotency keys, webhooks, refund workflows | Planned |
-| **Phase 10** | **Performance & Scale** | Redis caching, API rate limiting, Apache Kafka event streaming | Planned |
+The compiled JAR will be generated under `target/orderflow-0.0.1-SNAPSHOT.jar`.
 
 ---
 
-## Development & Learning Philosophy
+## Project Status & Roadmap
 
-OrderFlow is developed as a hands-on backend engineering project with a focus on understanding core principles:
-- **Foundational Understanding**: Grasping Java 21 and Spring Boot internals rather than relying on auto-configuration as a black box.
-- **Architectural Discipline**: Strict separation between controller transport, service business rules, and repository persistence.
-- **Contract Safety**: Using DTOs to decouple external API contracts from internal entity representations.
-- **Input Validation & Error Handling**: Enforcing constraints declaratively at the web boundary and translating errors via global exception advice.
-- **Testing Rigor**: Ensuring high test coverage with isolated unit and MockMvc slice tests before adding architectural complexity.
-- **Incremental Engineering**: Moving deliberately from working in-memory prototypes to robust persistence and distributed architecture.
+### Milestones
 
----
-
-## Commit Convention
-
-We use conventional commit messages to maintain clean project history:
-
-| Type | Purpose |
-| :--- | :--- |
-| `feat` | New feature or capability |
-| `fix` | Bug fix |
-| `docs` | Documentation updates |
-| `refactor` | Code restructuring without behavioral changes |
-| `test` | Adding or updating tests |
-| `chore` | Build configuration and maintenance |
+| Milestone | Scope | Status |
+| :--- | :--- | :---: |
+| **Phase 1: Foundation** | Spring Boot 4.1.2 setup, Java 21, Health endpoint, server configuration | **Completed** |
+| **Phase 2: Product Management** | Product domain model, service business logic, DTOs, full CRUD REST API | **Completed** |
+| **Phase 3: Validation & Exception Handling** | Jakarta Bean Validation, `@RestControllerAdvice`, standardized `ErrorResponse` | **Completed** |
+| **Phase 4: Database Persistence** | MySQL 8.4 LTS, Spring Data JPA, Hibernate ORM, schema generation | **Completed** |
+| **Phase 5: Order Foundation & Entities** | `Order`, `OrderItem`, `OrderStatus` enum, JPA mappings, cascade persistence | **Completed** |
+| **Phase 6: Transactional Order Placement** | `@Transactional`, stock validation and deduction, `BigDecimal` calculations | **Completed** |
+| **Phase 7: Concurrency & Lock Management** | Pessimistic write locking (`SELECT ... FOR UPDATE`), ascending lock ordering | **Completed** |
+| **Phase 8: Automated Testing** | 53 unit, web slice, and integration tests (latest verified result: 53 passing) | **Completed** |
+| **Phase 9: Order REST Controller** | `OrderController` endpoints (`POST /api/v1/orders`, `GET /api/v1/orders/{id}`) | **Next Milestone** |
+| **Phase 10: Order Management Lifecycle** | Order cancellation workflow, stock restoration, idempotency keys | Planned |
+| **Phase 11: Security & Identity** | Spring Security 6, JWT authentication, user ownership of orders | Planned |
+| **Phase 12: Production Readiness** | Dockerization, Redis caching, CI/CD pipeline, event-driven streaming | Future Milestone |
 
 ---
 
-## Repository
+## Development & Engineering Principles
 
-GitHub: [Mahishukla1207/OrderFlow](https://github.com/Mahishukla1207/OrderFlow)
+OrderFlow is developed as a rigorous backend portfolio project emphasizing software engineering fundamentals:
+- **ACID Transaction Boundaries**: Understanding isolation levels, transaction propagation, and automated rollback semantics.
+- **Handling Concurrency in Databases**: Protecting relevant product records against overselling with row-level pessimistic locks (`SELECT ... FOR UPDATE`) during order placement.
+- **Deadlock Mitigation**: Acquiring product locks in ascending ID order to reduce deadlock risk during concurrent multi-product orders.
+- **Contract Safety & Decoupling**: Protecting JPA entities from API consumers using clean DTO boundaries and Bean Validation.
+- **Precision with Money**: Strictly utilizing `BigDecimal` for currency arithmetic to avoid IEEE 754 floating-point rounding inaccuracies.
+- **Comprehensive Verification**: Validating all layers with isolated unit tests and real database integration tests before advancing milestones.
+
+---
 
 <p align="center">
-  <em>OrderFlow – Exploring reliable backend engineering with Java and Spring Boot.</em>
+  <em>OrderFlow — Reliable, concurrent, and maintainable backend engineering with Spring Boot & Java 21.</em>
 </p>
