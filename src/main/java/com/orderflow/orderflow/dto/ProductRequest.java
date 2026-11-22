@@ -15,6 +15,7 @@ public class ProductRequest {
     @NotNull
     @Min(0)  //Number must be atleast 0
     private Integer stockQuantity;
+    private Boolean active;
 
     // No-argument constructor
     public ProductRequest() {
@@ -26,6 +27,15 @@ public class ProductRequest {
         this.description = description;
         this.price = price;
         this.stockQuantity = stockQuantity;
+    }
+
+    // Overloaded constructor including active
+    public ProductRequest(String name, String description, BigDecimal price, Integer stockQuantity, Boolean active) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stockQuantity = stockQuantity;
+        this.active = active;
     }
 
     // Getters and Setters
@@ -59,5 +69,13 @@ public class ProductRequest {
 
     public void setStockQuantity(Integer stockQuantity) {
         this.stockQuantity = stockQuantity;
+    }
+
+    public Boolean getActive() {
+        return active;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

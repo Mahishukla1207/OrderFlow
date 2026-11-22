@@ -85,6 +85,7 @@ public class ProductController {
         product.setDescription(request.getDescription());
         product.setPrice(request.getPrice());
         product.setStockQuantity(request.getStockQuantity());
+        product.setActive(request.getActive());
         return product;
     }
 

@@ -217,6 +217,27 @@ void updateProduct_shouldUpdateProductWhenFound() {
 }
 
 @Test
+void updateProduct_shouldPersistActiveFalseWhenExistingWasTrue() {
+    // Arrange
+    Product existing = new Product(52L, "USB-C Hub", "Desc", new BigDecimal("1500.00"), 1, true);
+    Product update = new Product(null, "USB-C Hub", "Desc", new BigDecimal("1500.00"), 1, false);
+
+    when(productRepository.findById(52L)).thenReturn(Optional.of(existing));
+    when(productRepository.save(any(Product.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+    // Act
+    Optional<Product> result = productService.updateProduct(52L, update);
+
+    // Assert
+    assertTrue(result.isPresent());
+    assertFalse(result.get().getActive());
+
+    ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+    verify(productRepository).save(captor.capture());
+    assertFalse(captor.getValue().getActive());
+}
+
+@Test
 void updateProduct_shouldReturnEmptyWhenProductNotFound() {
     // Arrange
     Product updatedProduct = new Product(

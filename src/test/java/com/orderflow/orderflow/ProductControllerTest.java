@@ -211,6 +211,45 @@ void updateProduct_shouldReturnUpdatedProduct() throws Exception {
 }
 
 @Test
+void updateProduct_shouldUpdateActiveStatusToFalseWhenProvided() throws Exception {
+    // Arrange
+    Product updatedProduct = new Product(
+            52L,
+            "USB-C Hub",
+            "Multiport USB-C adapter",
+            new BigDecimal("1500.00"),
+            1,
+            false
+    );
+
+    org.mockito.ArgumentCaptor<Product> productCaptor = org.mockito.ArgumentCaptor.forClass(Product.class);
+    when(productService.updateProduct(eq(52L), productCaptor.capture()))
+            .thenReturn(Optional.of(updatedProduct));
+
+    // Act & Assert
+    mockMvc.perform(put("/api/v1/products/52")
+                    .contentType(APPLICATION_JSON)
+                    .content("""
+                            {
+                                "name": "USB-C Hub",
+                                "description": "Multiport USB-C adapter",
+                                "price": 1500.00,
+                                "stockQuantity": 1,
+                                "active": false
+                            }
+                            """))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(52))
+            .andExpect(jsonPath("$.name").value("USB-C Hub"))
+            .andExpect(jsonPath("$.price").value(1500.00))
+            .andExpect(jsonPath("$.stockQuantity").value(1))
+            .andExpect(jsonPath("$.active").value(false));
+
+    org.junit.jupiter.api.Assertions.assertEquals(Boolean.FALSE, productCaptor.getValue().getActive());
+    verify(productService).updateProduct(eq(52L), any(Product.class));
+}
+
+@Test
 void updateProduct_shouldReturnNotFoundWhenProductDoesNotExist() throws Exception {
 
     // Arrange
